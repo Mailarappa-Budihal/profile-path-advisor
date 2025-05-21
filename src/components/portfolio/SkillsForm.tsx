@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Edit } from 'lucide-react';
 import { Database } from '@/integrations/supabase/types';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -22,182 +21,215 @@ interface SkillCategory {
 
 const SkillsForm: React.FC<SkillsFormProps> = ({ data, updateData }) => {
   const [skillCategories, setSkillCategories] = useState<SkillCategory[]>(
-    ((data?.skills as SkillCategory[]) || [])
+    ((data?.skills as unknown) as SkillCategory[] || [])
   );
-  const [newCategory, setNewCategory] = useState('');
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [newSkill, setNewSkill] = useState('');
+  const [editingCategory, setEditingCategory] = useState<SkillCategory | null>(null);
+  const [isAddingNew, setIsAddingNew] = useState(false);
+  const [skillInput, setSkillInput] = useState('');
 
-  const handleAddCategory = () => {
-    if (!newCategory.trim()) return;
-    
-    const categoryId = crypto.randomUUID();
-    const newCat: SkillCategory = {
-      id: categoryId,
-      name: newCategory.trim(),
-      skills: [],
-    };
-    
-    const updatedCategories = [...skillCategories, newCat];
-    setSkillCategories(updatedCategories);
-    updateData('skills', updatedCategories);
-    setNewCategory('');
-    setActiveCategory(categoryId);
+  const defaultCategory: SkillCategory = {
+    id: '',
+    name: '',
+    skills: [],
   };
 
-  const handleRemoveCategory = (id: string) => {
+  const handleAddNew = () => {
+    setEditingCategory({
+      ...defaultCategory,
+      id: crypto.randomUUID()
+    });
+    setIsAddingNew(true);
+    setSkillInput('');
+  };
+
+  const handleEditExisting = (category: SkillCategory) => {
+    setEditingCategory(category);
+    setIsAddingNew(false);
+    setSkillInput('');
+  };
+
+  const handleSaveCategory = () => {
+    if (!editingCategory) return;
+
+    let updatedCategories: SkillCategory[];
+    
+    if (isAddingNew) {
+      updatedCategories = [...skillCategories, editingCategory];
+    } else {
+      updatedCategories = skillCategories.map(cat => 
+        cat.id === editingCategory.id ? editingCategory : cat
+      );
+    }
+    
+    setSkillCategories(updatedCategories);
+    updateData('skills', updatedCategories);
+    setEditingCategory(null);
+    setIsAddingNew(false);
+  };
+
+  const handleDeleteCategory = (id: string) => {
     const updatedCategories = skillCategories.filter(cat => cat.id !== id);
     setSkillCategories(updatedCategories);
     updateData('skills', updatedCategories);
-    if (activeCategory === id) {
-      setActiveCategory(updatedCategories.length > 0 ? updatedCategories[0].id : null);
-    }
   };
 
-  const handleAddSkill = (categoryId: string) => {
-    if (!newSkill.trim()) return;
-    
-    const updatedCategories = skillCategories.map(cat => {
-      if (cat.id === categoryId) {
-        return {
-          ...cat,
-          skills: [...cat.skills, newSkill.trim()]
-        };
-      }
-      return cat;
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setEditingCategory(prev => {
+      if (!prev) return null;
+      return { ...prev, [name]: value };
     });
-    
-    setSkillCategories(updatedCategories);
-    updateData('skills', updatedCategories);
-    setNewSkill('');
   };
 
-  const handleRemoveSkill = (categoryId: string, skill: string) => {
-    const updatedCategories = skillCategories.map(cat => {
-      if (cat.id === categoryId) {
-        return {
-          ...cat,
-          skills: cat.skills.filter(s => s !== skill)
-        };
-      }
-      return cat;
+  const handleAddSkill = () => {
+    if (!skillInput.trim() || !editingCategory) return;
+    
+    setEditingCategory(prev => {
+      if (!prev) return null;
+      return { 
+        ...prev, 
+        skills: [...prev.skills, skillInput.trim()] 
+      };
     });
     
-    setSkillCategories(updatedCategories);
-    updateData('skills', updatedCategories);
+    setSkillInput('');
+  };
+
+  const handleRemoveSkill = (skill: string) => {
+    if (!editingCategory) return;
+    
+    setEditingCategory(prev => {
+      if (!prev) return null;
+      return { 
+        ...prev, 
+        skills: prev.skills.filter(s => s !== skill) 
+      };
+    });
   };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Skills</h2>
+        <Button 
+          onClick={handleAddNew} 
+          className="flex items-center gap-1"
+          disabled={!!editingCategory}
+        >
+          <Plus size={18} /> Add Category
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Categories */}
-        <div className="space-y-4">
-          <h3 className="font-medium">Skill Categories</h3>
-          
-          <div className="flex gap-2 items-center">
-            <Input
-              value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value)}
-              placeholder="New category name..."
-            />
-            <Button onClick={handleAddCategory}>Add</Button>
-          </div>
-          
-          <div className="space-y-2 mt-4">
-            {skillCategories.length === 0 ? (
-              <p className="text-gray-500 text-sm italic">No skill categories added yet.</p>
-            ) : (
-              skillCategories.map((category) => (
-                <div 
-                  key={category.id}
-                  className={`flex justify-between items-center p-2 rounded cursor-pointer ${
-                    activeCategory === category.id ? 'bg-gray-100' : ''
-                  }`}
-                  onClick={() => setActiveCategory(category.id)}
-                >
-                  <span>{category.name}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500">{category.skills.length} skills</span>
+      {editingCategory ? (
+        <Card className="border-2 border-portfolio-primary">
+          <CardContent className="pt-6 space-y-4">
+            <div>
+              <Label htmlFor="name">Category Name</Label>
+              <Input
+                id="name"
+                name="name"
+                value={editingCategory.name}
+                onChange={handleInputChange}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="skills">Skills</Label>
+              <div className="flex gap-2 items-center">
+                <Input
+                  id="skills"
+                  value={skillInput}
+                  onChange={(e) => setSkillInput(e.target.value)}
+                  placeholder="e.g., React, TypeScript"
+                />
+                <Button type="button" onClick={handleAddSkill}>Add</Button>
+              </div>
+              
+              {editingCategory.skills.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {editingCategory.skills.map((skill) => (
+                    <span 
+                      key={skill} 
+                      className="bg-gray-100 px-2 py-1 rounded-full text-sm flex items-center gap-1"
+                    >
+                      {skill}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveSkill(skill)}
+                        className="text-red-500 hover:text-red-700 focus:outline-none"
+                      >
+                        &times;
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-2 justify-end">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setEditingCategory(null);
+                  setIsAddingNew(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleSaveCategory}>Save</Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : skillCategories && skillCategories.length === 0 ? (
+        <div className="text-center py-10 bg-gray-50 rounded-lg">
+          <p className="text-gray-500">No skill categories added yet. Click "Add Category" to get started.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {skillCategories && skillCategories.map((category) => (
+            <Card key={category.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="pt-6">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="text-lg font-medium">{category.name}</h3>
+                  </div>
+                  <div className="flex gap-2">
                     <Button 
                       variant="ghost" 
                       size="icon"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemoveCategory(category.id);
-                      }}
-                      className="text-red-500 hover:text-red-700 h-6 w-6"
+                      onClick={() => handleEditExisting(category)}
+                      className="text-gray-500 hover:text-gray-700"
                     >
-                      <Trash2 size={16} />
+                      <Edit size={18} />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => handleDeleteCategory(category.id)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 size={18} />
                     </Button>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
-        </div>
-        
-        {/* Right Column: Skills */}
-        <div className="lg:col-span-2">
-          {activeCategory ? (
-            <Card>
-              <CardContent className="pt-6 space-y-4">
-                <h3 className="font-medium">
-                  {skillCategories.find(cat => cat.id === activeCategory)?.name} Skills
-                </h3>
                 
-                <div className="flex gap-2 items-center">
-                  <Input
-                    value={newSkill}
-                    onChange={(e) => setNewSkill(e.target.value)}
-                    placeholder="New skill..."
-                  />
-                  <Button 
-                    className="flex items-center gap-1"
-                    onClick={() => handleAddSkill(activeCategory)}
-                  >
-                    <Plus size={18} /> Add
-                  </Button>
-                </div>
-                
-                <div className="flex flex-wrap gap-2 mt-4">
-                  {skillCategories.find(cat => cat.id === activeCategory)?.skills.length === 0 ? (
-                    <p className="text-gray-500 text-sm italic">No skills added yet for this category.</p>
-                  ) : (
-                    skillCategories
-                      .find(cat => cat.id === activeCategory)
-                      ?.skills.map((skill, index) => (
-                        <div 
-                          key={index}
-                          className="bg-gray-100 rounded-full px-3 py-1 flex items-center gap-2"
-                        >
-                          <span>{skill}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveSkill(activeCategory, skill)}
-                            className="text-red-500 hover:text-red-700 focus:outline-none"
-                          >
-                            &times;
-                          </button>
-                        </div>
-                      ))
-                  )}
-                </div>
+                {category.skills.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-1">
+                    {category.skills.map((skill) => (
+                      <span 
+                        key={`${category.id}-${skill}`} 
+                        className="bg-gray-100 px-2 py-0.5 text-xs rounded-full"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
-          ) : (
-            <div className="flex items-center justify-center h-full bg-gray-50 rounded-lg p-6 text-center">
-              <div>
-                <p className="text-gray-500 mb-2">Select a skill category or create a new one to add skills.</p>
-                <p className="text-gray-400 text-sm">Examples: Programming Languages, Frameworks, Soft Skills</p>
-              </div>
-            </div>
-          )}
+          ))}
         </div>
-      </div>
+      )}
     </div>
   );
 };

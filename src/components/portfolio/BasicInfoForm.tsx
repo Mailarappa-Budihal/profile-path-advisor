@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Database } from '@/integrations/supabase/types';
+import { Json } from '@/integrations/supabase/types';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
@@ -20,12 +21,14 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ data, updateData }) => {
   };
 
   const handleContactInfoChange = (key: string, value: string) => {
-    const contactInfo = data?.contact_info ? { ...data.contact_info } : {};
+    // Use type assertion to ensure we're working with an object
+    const contactInfo = (data?.contact_info as Record<string, any>) || {};
     updateData('contact_info', { ...contactInfo, [key]: value });
   };
 
   const handleSocialLinksChange = (key: string, value: string) => {
-    const socialLinks = data?.social_links ? { ...data.social_links } : {};
+    // Use type assertion to ensure we're working with an object
+    const socialLinks = (data?.social_links as Record<string, any>) || {};
     updateData('social_links', { ...socialLinks, [key]: value });
   };
 
@@ -70,7 +73,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ data, updateData }) => {
                   id="email"
                   name="email"
                   placeholder="your.email@example.com"
-                  value={(data?.contact_info as any)?.email || ''}
+                  value={(data?.contact_info as Record<string, any>)?.email || ''}
                   onChange={(e) => handleContactInfoChange('email', e.target.value)}
                 />
               </div>
@@ -81,7 +84,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ data, updateData }) => {
                   id="phone"
                   name="phone"
                   placeholder="+1 (123) 456-7890"
-                  value={(data?.contact_info as any)?.phone || ''}
+                  value={(data?.contact_info as Record<string, any>)?.phone || ''}
                   onChange={(e) => handleContactInfoChange('phone', e.target.value)}
                 />
               </div>
@@ -92,7 +95,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ data, updateData }) => {
                   id="location"
                   name="location"
                   placeholder="City, State, Country"
-                  value={(data?.contact_info as any)?.location || ''}
+                  value={(data?.contact_info as Record<string, any>)?.location || ''}
                   onChange={(e) => handleContactInfoChange('location', e.target.value)}
                 />
               </div>
@@ -109,7 +112,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ data, updateData }) => {
                   id="linkedin"
                   name="linkedin"
                   placeholder="https://linkedin.com/in/yourprofile"
-                  value={(data?.social_links as any)?.linkedin || ''}
+                  value={(data?.social_links as Record<string, any>)?.linkedin || ''}
                   onChange={(e) => handleSocialLinksChange('linkedin', e.target.value)}
                 />
               </div>
@@ -120,7 +123,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ data, updateData }) => {
                   id="github"
                   name="github"
                   placeholder="https://github.com/yourusername"
-                  value={(data?.social_links as any)?.github || ''}
+                  value={(data?.social_links as Record<string, any>)?.github || ''}
                   onChange={(e) => handleSocialLinksChange('github', e.target.value)}
                 />
               </div>
@@ -131,7 +134,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ data, updateData }) => {
                   id="portfolio"
                   name="portfolio"
                   placeholder="https://yourwebsite.com"
-                  value={(data?.social_links as any)?.portfolio || ''}
+                  value={(data?.social_links as Record<string, any>)?.portfolio || ''}
                   onChange={(e) => handleSocialLinksChange('portfolio', e.target.value)}
                 />
               </div>

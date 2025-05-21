@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,16 +19,16 @@ interface EducationItem {
   school: string;
   degree: string;
   field: string;
+  location: string;
   startDate: string;
   endDate: string;
   current: boolean;
   description: string;
-  location: string;
 }
 
 const EducationForm: React.FC<EducationFormProps> = ({ data, updateData }) => {
-  const [educations, setEducations] = useState<EducationItem[]>(
-    ((data?.education as EducationItem[]) || [])
+  const [educationList, setEducationList] = useState<EducationItem[]>(
+    ((data?.education as unknown) as EducationItem[] || [])
   );
   const [editingEducation, setEditingEducation] = useState<EducationItem | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
@@ -39,11 +38,11 @@ const EducationForm: React.FC<EducationFormProps> = ({ data, updateData }) => {
     school: '',
     degree: '',
     field: '',
+    location: '',
     startDate: '',
     endDate: '',
     current: false,
     description: '',
-    location: ''
   };
 
   const handleAddNew = () => {
@@ -62,26 +61,26 @@ const EducationForm: React.FC<EducationFormProps> = ({ data, updateData }) => {
   const handleSaveEducation = () => {
     if (!editingEducation) return;
 
-    let updatedEducations: EducationItem[];
+    let updatedEducationList: EducationItem[];
     
     if (isAddingNew) {
-      updatedEducations = [...educations, editingEducation];
+      updatedEducationList = [...educationList, editingEducation];
     } else {
-      updatedEducations = educations.map(edu => 
+      updatedEducationList = educationList.map(edu => 
         edu.id === editingEducation.id ? editingEducation : edu
       );
     }
     
-    setEducations(updatedEducations);
-    updateData('education', updatedEducations);
+    setEducationList(updatedEducationList);
+    updateData('education', updatedEducationList);
     setEditingEducation(null);
     setIsAddingNew(false);
   };
 
   const handleDeleteEducation = (id: string) => {
-    const updatedEducations = educations.filter(edu => edu.id !== id);
-    setEducations(updatedEducations);
-    updateData('education', updatedEducations);
+    const updatedEducationList = educationList.filter(edu => edu.id !== id);
+    setEducationList(updatedEducationList);
+    updateData('education', updatedEducationList);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -117,7 +116,7 @@ const EducationForm: React.FC<EducationFormProps> = ({ data, updateData }) => {
         <Card className="border-2 border-portfolio-primary">
           <CardContent className="pt-6 space-y-4">
             <div>
-              <Label htmlFor="school">School</Label>
+              <Label htmlFor="school">School Name</Label>
               <Input
                 id="school"
                 name="school"
@@ -126,28 +125,26 @@ const EducationForm: React.FC<EducationFormProps> = ({ data, updateData }) => {
               />
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="degree">Degree</Label>
-                <Input
-                  id="degree"
-                  name="degree"
-                  value={editingEducation.degree}
-                  onChange={handleInputChange}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="field">Field of Study</Label>
-                <Input
-                  id="field"
-                  name="field"
-                  value={editingEducation.field}
-                  onChange={handleInputChange}
-                />
-              </div>
+            <div>
+              <Label htmlFor="degree">Degree</Label>
+              <Input
+                id="degree"
+                name="degree"
+                value={editingEducation.degree}
+                onChange={handleInputChange}
+              />
             </div>
 
+            <div>
+              <Label htmlFor="field">Field of Study</Label>
+              <Input
+                id="field"
+                name="field"
+                value={editingEducation.field}
+                onChange={handleInputChange}
+              />
+            </div>
+            
             <div>
               <Label htmlFor="location">Location</Label>
               <Input
@@ -190,13 +187,13 @@ const EducationForm: React.FC<EducationFormProps> = ({ data, updateData }) => {
                     onChange={handleCheckboxChange}
                     className="mr-2"
                   />
-                  <Label htmlFor="current">I'm currently studying here</Label>
+                  <Label htmlFor="current">I currently study here</Label>
                 </div>
               </div>
             </div>
 
             <div>
-              <Label htmlFor="description">Additional Information</Label>
+              <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
                 name="description"
@@ -220,21 +217,21 @@ const EducationForm: React.FC<EducationFormProps> = ({ data, updateData }) => {
             </div>
           </CardContent>
         </Card>
-      ) : educations.length === 0 ? (
+      ) : educationList && educationList.length === 0 ? (
         <div className="text-center py-10 bg-gray-50 rounded-lg">
-          <p className="text-gray-500">No education records added yet. Click "Add Education" to get started.</p>
+          <p className="text-gray-500">No education added yet. Click "Add Education" to get started.</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {educations.map((education) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {educationList && educationList.map((education) => (
             <Card key={education.id} className="hover:shadow-md transition-shadow">
               <CardContent className="pt-6">
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="text-lg font-medium">{education.school}</h3>
-                    <p className="text-gray-600">{education.degree} in {education.field}</p>
+                    <p className="text-gray-500 text-sm">{education.degree} in {education.field}</p>
                     <p className="text-gray-500 text-sm">
-                      {education.location} | {education.startDate} - {education.current ? 'Present' : education.endDate}
+                      {education.startDate} - {education.current ? 'Present' : education.endDate}
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -256,7 +253,7 @@ const EducationForm: React.FC<EducationFormProps> = ({ data, updateData }) => {
                     </Button>
                   </div>
                 </div>
-                <p className="mt-2 text-gray-600 whitespace-pre-line">{education.description}</p>
+                <p className="mt-2 text-gray-600 line-clamp-3">{education.description}</p>
               </CardContent>
             </Card>
           ))}

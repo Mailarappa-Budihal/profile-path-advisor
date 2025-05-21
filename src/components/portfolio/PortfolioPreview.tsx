@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,6 +7,48 @@ type Profile = Database['public']['Tables']['profiles']['Row'];
 
 interface PortfolioPreviewProps {
   portfolioData: Partial<Profile> | null;
+}
+
+// Define types for our structured data
+interface ProjectItem {
+  id: string;
+  title: string;
+  description: string;
+  technologies: string[];
+  startDate: string;
+  endDate: string;
+  current: boolean;
+  link: string;
+  imageUrl: string;
+}
+
+interface ExperienceItem {
+  id: string;
+  company: string;
+  position: string;
+  location: string;
+  startDate: string;
+  endDate: string;
+  current: boolean;
+  description: string;
+}
+
+interface EducationItem {
+  id: string;
+  school: string;
+  degree: string;
+  field: string;
+  location: string;
+  startDate: string;
+  endDate: string;
+  current: boolean;
+  description: string;
+}
+
+interface SkillCategory {
+  id: string;
+  name: string;
+  skills: string[];
 }
 
 const PortfolioPreview: React.FC<PortfolioPreviewProps> = ({ portfolioData }) => {
@@ -62,10 +103,11 @@ const PortfolioPreview: React.FC<PortfolioPreviewProps> = ({ portfolioData }) =>
 };
 
 const ModernPreview: React.FC<{ data: Partial<Profile> }> = ({ data }) => {
-  const experiences = ((data.experience || []) as any[]);
-  const education = ((data.education || []) as any[]);
-  const projects = ((data.projects || []) as any[]);
-  const skills = ((data.skills || []) as any[]);
+  // Safely cast the JSON fields to their expected types
+  const experiences = ((data.experience as unknown) as ExperienceItem[] || []);
+  const education = ((data.education as unknown) as EducationItem[] || []);
+  const projects = ((data.projects as unknown) as ProjectItem[] || []);
+  const skills = ((data.skills as unknown) as SkillCategory[] || []);
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -173,7 +215,7 @@ const ModernPreview: React.FC<{ data: Partial<Profile> }> = ({ data }) => {
         <div className="mb-10">
           <h2 className="text-2xl font-bold border-b pb-2 mb-6">Projects</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {projects.map((project: any) => (
+            {projects.map((project: ProjectItem) => (
               <div key={project.id} className="border rounded-lg overflow-hidden">
                 {project.imageUrl && (
                   <div className="h-48 overflow-hidden">
@@ -250,10 +292,11 @@ const ModernPreview: React.FC<{ data: Partial<Profile> }> = ({ data }) => {
 };
 
 const ClassicPreview: React.FC<{ data: Partial<Profile> }> = ({ data }) => {
-  const experiences = ((data.experience || []) as any[]);
-  const education = ((data.education || []) as any[]);
-  const projects = ((data.projects || []) as any[]);
-  const skills = ((data.skills || []) as any[]);
+  // Safely cast the JSON fields to their expected types
+  const experiences = ((data.experience as unknown) as ExperienceItem[] || []);
+  const education = ((data.education as unknown) as EducationItem[] || []);
+  const projects = ((data.projects as unknown) as ProjectItem[] || []);
+  const skills = ((data.skills as unknown) as SkillCategory[] || []);
 
   return (
     <div className="max-w-4xl mx-auto" style={{ fontFamily: 'Georgia, serif' }}>
@@ -357,7 +400,7 @@ const ClassicPreview: React.FC<{ data: Partial<Profile> }> = ({ data }) => {
         <div className="mb-8">
           <h2 className="text-2xl font-bold mb-4 uppercase text-gray-800">Projects</h2>
           <div className="space-y-4">
-            {projects.map((project: any) => (
+            {projects.map((project: ProjectItem) => (
               <div key={project.id}>
                 <div className="flex justify-between items-start">
                   <div>

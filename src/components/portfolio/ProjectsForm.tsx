@@ -28,8 +28,9 @@ interface ProjectItem {
 }
 
 const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, updateData }) => {
+  // Type assertion to ensure we're working with the expected type
   const [projects, setProjects] = useState<ProjectItem[]>(
-    ((data?.projects as ProjectItem[]) || [])
+    ((data?.projects as unknown) as ProjectItem[] || [])
   );
   const [editingProject, setEditingProject] = useState<ProjectItem | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);

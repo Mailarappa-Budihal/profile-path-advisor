@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,16 +18,16 @@ interface ExperienceItem {
   id: string;
   company: string;
   position: string;
+  location: string;
   startDate: string;
   endDate: string;
   current: boolean;
   description: string;
-  location: string;
 }
 
 const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, updateData }) => {
   const [experiences, setExperiences] = useState<ExperienceItem[]>(
-    ((data?.experience as ExperienceItem[]) || [])
+    ((data?.experience as unknown) as ExperienceItem[] || [])
   );
   const [editingExperience, setEditingExperience] = useState<ExperienceItem | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
@@ -37,11 +36,11 @@ const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, updateData }) => 
     id: '',
     company: '',
     position: '',
+    location: '',
     startDate: '',
     endDate: '',
     current: false,
     description: '',
-    location: ''
   };
 
   const handleAddNew = () => {
@@ -101,7 +100,7 @@ const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, updateData }) => 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Work Experience</h2>
+        <h2 className="text-xl font-semibold">Experience</h2>
         <Button 
           onClick={handleAddNew} 
           className="flex items-center gap-1"
@@ -114,26 +113,24 @@ const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, updateData }) => 
       {editingExperience ? (
         <Card className="border-2 border-portfolio-primary">
           <CardContent className="pt-6 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="company">Company</Label>
-                <Input
-                  id="company"
-                  name="company"
-                  value={editingExperience.company}
-                  onChange={handleInputChange}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="position">Position</Label>
-                <Input
-                  id="position"
-                  name="position"
-                  value={editingExperience.position}
-                  onChange={handleInputChange}
-                />
-              </div>
+            <div>
+              <Label htmlFor="company">Company</Label>
+              <Input
+                id="company"
+                name="company"
+                value={editingExperience.company}
+                onChange={handleInputChange}
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="position">Position</Label>
+              <Input
+                id="position"
+                name="position"
+                value={editingExperience.position}
+                onChange={handleInputChange}
+              />
             </div>
 
             <div>
@@ -145,7 +142,7 @@ const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, updateData }) => 
                 onChange={handleInputChange}
               />
             </div>
-
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="startDate">Start Date</Label>
@@ -184,7 +181,7 @@ const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, updateData }) => 
             </div>
 
             <div>
-              <Label htmlFor="description">Job Description</Label>
+              <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
                 name="description"
@@ -208,21 +205,21 @@ const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, updateData }) => 
             </div>
           </CardContent>
         </Card>
-      ) : experiences.length === 0 ? (
+      ) : experiences && experiences.length === 0 ? (
         <div className="text-center py-10 bg-gray-50 rounded-lg">
-          <p className="text-gray-500">No work experiences added yet. Click "Add Experience" to get started.</p>
+          <p className="text-gray-500">No experience added yet. Click "Add Experience" to get started.</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {experiences.map((experience) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {experiences && experiences.map((experience) => (
             <Card key={experience.id} className="hover:shadow-md transition-shadow">
               <CardContent className="pt-6">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="text-lg font-medium">{experience.position}</h3>
-                    <p className="text-gray-600">{experience.company}</p>
+                    <h3 className="text-lg font-medium">{experience.company}</h3>
+                    <p className="text-gray-500 text-sm">{experience.position}</p>
                     <p className="text-gray-500 text-sm">
-                      {experience.location} | {experience.startDate} - {experience.current ? 'Present' : experience.endDate}
+                      {experience.startDate} - {experience.current ? 'Present' : experience.endDate}
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -244,7 +241,7 @@ const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, updateData }) => 
                     </Button>
                   </div>
                 </div>
-                <p className="mt-2 text-gray-600 whitespace-pre-line">{experience.description}</p>
+                <p className="mt-2 text-gray-600 line-clamp-3">{experience.description}</p>
               </CardContent>
             </Card>
           ))}
