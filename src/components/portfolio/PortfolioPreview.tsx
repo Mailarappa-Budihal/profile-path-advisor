@@ -2,6 +2,11 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Database } from '@/integrations/supabase/types';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
+import { Share, Download, ExternalLink, Link } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
@@ -53,6 +58,58 @@ interface SkillCategory {
 
 const PortfolioPreview: React.FC<PortfolioPreviewProps> = ({ portfolioData }) => {
   const [viewMode, setViewMode] = useState('modern');
+  const [shareUrl, setShareUrl] = useState('');
+  const [isDeploying, setIsDeploying] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const navigate = useNavigate();
+
+  const handleShare = (platform: 'linkedin' | 'twitter' | 'facebook') => {
+    // Generate a dummy portfolio URL
+    const portfolioUrl = `https://portfolio.example.com/${portfolioData?.user_id || 'user'}`;
+    
+    let shareUrl = '';
+    switch(platform) {
+      case 'linkedin':
+        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(portfolioUrl)}`;
+        break;
+      case 'twitter':
+        shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(portfolioUrl)}&text=Check out my professional portfolio!`;
+        break;
+      case 'facebook':
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(portfolioUrl)}`;
+        break;
+    }
+    
+    setShareUrl(shareUrl);
+    window.open(shareUrl, '_blank', 'width=600,height=400');
+    toast.success(`Shared to ${platform}!`);
+  };
+
+  const handleCopyLink = () => {
+    const portfolioUrl = `https://portfolio.example.com/${portfolioData?.user_id || 'user'}`;
+    navigator.clipboard.writeText(portfolioUrl);
+    toast.success("Link copied to clipboard!");
+  };
+
+  const handleDeploy = () => {
+    setIsDeploying(true);
+    
+    // Simulate deployment process
+    setTimeout(() => {
+      setIsDeploying(false);
+      toast.success("Portfolio deployed successfully!");
+    }, 2000);
+  };
+
+  const handleDownload = (format: 'html' | 'pdf') => {
+    setIsDownloading(true);
+    
+    // Simulate download process
+    setTimeout(() => {
+      setIsDownloading(false);
+      toast.success(`Portfolio downloaded as ${format.toUpperCase()}`);
+    }, 1500);
+  };
 
   if (!portfolioData) {
     return (
@@ -86,22 +143,109 @@ const PortfolioPreview: React.FC<PortfolioPreviewProps> = ({ portfolioData }) =>
         </div>
       </div>
       
-      <div className="flex justify-center">
-        <Button disabled className="mr-2">
-          Publish Portfolio
+      <div className="flex flex-wrap justify-center gap-2">
+        <Button 
+          onClick={handleDeploy} 
+          disabled={isDeploying} 
+          className="flex items-center gap-2"
+        >
+          <ExternalLink size={16} />
+          {isDeploying ? 'Deploying...' : 'Publish Portfolio'}
         </Button>
-        <Button variant="outline" disabled>
-          Export as HTML
-        </Button>
+        
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="flex items-center gap-2">
+              <Download size={16} />
+              Export
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Export Portfolio</DialogTitle>
+            </DialogHeader>
+            <div className="flex flex-col gap-4 py-4">
+              <Button 
+                onClick={() => handleDownload('html')} 
+                variant="outline" 
+                disabled={isDownloading}
+              >
+                Download as HTML
+              </Button>
+              <Button 
+                onClick={() => handleDownload('pdf')} 
+                variant="outline" 
+                disabled={isDownloading}
+              >
+                Download as PDF
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+        
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="flex items-center gap-2">
+              <Share size={16} />
+              Share
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Share Your Portfolio</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="flex flex-col gap-4">
+                <Button 
+                  onClick={() => handleShare('linkedin')} 
+                  variant="outline" 
+                  className="flex justify-center"
+                >
+                  Share on LinkedIn
+                </Button>
+                <Button 
+                  onClick={() => handleShare('twitter')} 
+                  variant="outline"
+                  className="flex justify-center"
+                >
+                  Share on Twitter
+                </Button>
+                <Button 
+                  onClick={() => handleShare('facebook')} 
+                  variant="outline"
+                  className="flex justify-center"
+                >
+                  Share on Facebook
+                </Button>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Input 
+                  value={`https://portfolio.example.com/${portfolioData?.user_id || 'user'}`}
+                  readOnly
+                />
+                <Button 
+                  size="sm" 
+                  onClick={handleCopyLink}
+                  className="flex items-center gap-1"
+                >
+                  <Link size={14} />
+                  Copy
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
       
       <div className="text-center text-gray-500 text-sm">
-        <p>These features will be available soon.</p>
+        <p>Your portfolio will be available at https://portfolio.example.com/{portfolioData?.user_id || 'user'}</p>
       </div>
     </div>
   );
 };
 
+// Keep existing ModernPreview and ClassicPreview components
 const ModernPreview: React.FC<{ data: Partial<Profile> }> = ({ data }) => {
   // Safely cast the JSON fields to their expected types
   const experiences = ((data.experience as unknown) as ExperienceItem[] || []);

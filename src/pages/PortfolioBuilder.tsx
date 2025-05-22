@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthProvider';
@@ -94,8 +95,13 @@ const PortfolioBuilder = () => {
   return (
     <DashboardLayout>
       <div className="container mx-auto px-4 py-8">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold mb-2">AI Portfolio Builder</h1>
+          <p className="text-gray-600">Create a professional portfolio by importing your resume or connecting your social profiles</p>
+        </div>
+
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Portfolio Builder</h1>
+          <h2 className="text-2xl font-bold">Build Your Portfolio</h2>
           <Button 
             onClick={handleSavePortfolio}
             disabled={isSaving}
