@@ -5,8 +5,9 @@ import { Database } from '@/integrations/supabase/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { Share, Download, ExternalLink, Link } from 'lucide-react';
+import { Share, Download, ExternalLink, Link, Github, Linkedin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Separator } from "@/components/ui/separator";
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
@@ -61,11 +62,16 @@ const PortfolioPreview: React.FC<PortfolioPreviewProps> = ({ portfolioData }) =>
   const [shareUrl, setShareUrl] = useState('');
   const [isDeploying, setIsDeploying] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [deploymentStatus, setDeploymentStatus] = useState<'idle' | 'deploying' | 'deployed'>('idle');
+  const [deployedUrl, setDeployedUrl] = useState('');
   const navigate = useNavigate();
+  
+  // Additional template options
+  const [selectedTemplate, setSelectedTemplate] = useState('modern');
 
   const handleShare = (platform: 'linkedin' | 'twitter' | 'facebook') => {
-    // Generate a dummy portfolio URL
-    const portfolioUrl = `https://portfolio.example.com/${portfolioData?.user_id || 'user'}`;
+    // Generate a dummy portfolio URL or use the deployed URL if available
+    const portfolioUrl = deployedUrl || `https://portfolio.example.com/${portfolioData?.user_id || 'user'}`;
     
     let shareUrl = '';
     switch(platform) {
@@ -86,19 +92,22 @@ const PortfolioPreview: React.FC<PortfolioPreviewProps> = ({ portfolioData }) =>
   };
 
   const handleCopyLink = () => {
-    const portfolioUrl = `https://portfolio.example.com/${portfolioData?.user_id || 'user'}`;
+    const portfolioUrl = deployedUrl || `https://portfolio.example.com/${portfolioData?.user_id || 'user'}`;
     navigator.clipboard.writeText(portfolioUrl);
     toast.success("Link copied to clipboard!");
   };
 
   const handleDeploy = () => {
     setIsDeploying(true);
+    setDeploymentStatus('deploying');
     
     // Simulate deployment process
     setTimeout(() => {
       setIsDeploying(false);
+      setDeploymentStatus('deployed');
+      setDeployedUrl(`https://portfolio-${Date.now().toString(36)}.example.com`);
       toast.success("Portfolio deployed successfully!");
-    }, 2000);
+    }, 3000);
   };
 
   const handleDownload = (format: 'html' | 'pdf') => {
@@ -123,7 +132,7 @@ const PortfolioPreview: React.FC<PortfolioPreviewProps> = ({ portfolioData }) =>
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Portfolio Preview</h2>
-        <div>
+        <div className="flex items-center gap-2">
           <Tabs value={viewMode} onValueChange={setViewMode} className="w-56">
             <TabsList className="grid grid-cols-2">
               <TabsTrigger value="modern">Modern</TabsTrigger>
@@ -132,6 +141,34 @@ const PortfolioPreview: React.FC<PortfolioPreviewProps> = ({ portfolioData }) =>
           </Tabs>
         </div>
       </div>
+
+      {/* Deployment Status Banner */}
+      {deploymentStatus === 'deployed' && (
+        <div className="bg-green-50 border border-green-200 rounded-md p-4 flex justify-between items-center">
+          <div>
+            <p className="text-green-800 font-medium">Portfolio Successfully Deployed!</p>
+            <p className="text-green-700 text-sm">Your portfolio is live at: 
+              <a 
+                href={deployedUrl} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="ml-1 underline hover:text-green-900"
+              >
+                {deployedUrl}
+              </a>
+            </p>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="text-green-800 border-green-300 hover:bg-green-100"
+            onClick={handleCopyLink}
+          >
+            <Link size={14} className="mr-1" />
+            Copy URL
+          </Button>
+        </div>
+      )}
       
       <div className="bg-white border rounded-lg overflow-hidden shadow-lg">
         <div className="p-6">
@@ -143,103 +180,120 @@ const PortfolioPreview: React.FC<PortfolioPreviewProps> = ({ portfolioData }) =>
         </div>
       </div>
       
-      <div className="flex flex-wrap justify-center gap-2">
-        <Button 
-          onClick={handleDeploy} 
-          disabled={isDeploying} 
-          className="flex items-center gap-2"
-        >
-          <ExternalLink size={16} />
-          {isDeploying ? 'Deploying...' : 'Publish Portfolio'}
-        </Button>
-        
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline" className="flex items-center gap-2">
-              <Download size={16} />
-              Export
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Export Portfolio</DialogTitle>
-            </DialogHeader>
-            <div className="flex flex-col gap-4 py-4">
-              <Button 
-                onClick={() => handleDownload('html')} 
-                variant="outline" 
-                disabled={isDownloading}
-              >
-                Download as HTML
+      <div className="flex flex-col md:flex-row md:justify-between gap-4">
+        {/* Action Buttons */}
+        <div className="flex flex-wrap justify-center md:justify-start gap-2">
+          <Button 
+            onClick={handleDeploy} 
+            disabled={isDeploying} 
+            className="flex items-center gap-2"
+          >
+            <ExternalLink size={16} />
+            {isDeploying ? 'Deploying...' : deploymentStatus === 'deployed' ? 'Redeploy Portfolio' : 'Publish Portfolio'}
+          </Button>
+          
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2">
+                <Download size={16} />
+                Export
               </Button>
-              <Button 
-                onClick={() => handleDownload('pdf')} 
-                variant="outline" 
-                disabled={isDownloading}
-              >
-                Download as PDF
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-        
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline" className="flex items-center gap-2">
-              <Share size={16} />
-              Share
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Share Your Portfolio</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="flex flex-col gap-4">
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Export Portfolio</DialogTitle>
+              </DialogHeader>
+              <div className="flex flex-col gap-4 py-4">
                 <Button 
-                  onClick={() => handleShare('linkedin')} 
+                  onClick={() => handleDownload('html')} 
                   variant="outline" 
-                  className="flex justify-center"
+                  disabled={isDownloading}
+                  className="flex items-center gap-2"
                 >
-                  Share on LinkedIn
+                  <Download size={14} />
+                  Download as HTML Site
                 </Button>
                 <Button 
-                  onClick={() => handleShare('twitter')} 
-                  variant="outline"
-                  className="flex justify-center"
+                  onClick={() => handleDownload('pdf')} 
+                  variant="outline" 
+                  disabled={isDownloading}
+                  className="flex items-center gap-2"
                 >
-                  Share on Twitter
-                </Button>
-                <Button 
-                  onClick={() => handleShare('facebook')} 
-                  variant="outline"
-                  className="flex justify-center"
-                >
-                  Share on Facebook
+                  <Download size={14} />
+                  Download as PDF Resume
                 </Button>
               </div>
-              
-              <div className="flex items-center gap-2">
-                <Input 
-                  value={`https://portfolio.example.com/${portfolioData?.user_id || 'user'}`}
-                  readOnly
-                />
-                <Button 
-                  size="sm" 
-                  onClick={handleCopyLink}
-                  className="flex items-center gap-1"
-                >
-                  <Link size={14} />
-                  Copy
-                </Button>
+            </DialogContent>
+          </Dialog>
+          
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2">
+                <Share size={16} />
+                Share
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Share Your Portfolio</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="flex flex-col gap-4">
+                  <Button 
+                    onClick={() => handleShare('linkedin')} 
+                    variant="outline" 
+                    className="flex justify-center items-center gap-2"
+                  >
+                    <Linkedin size={16} />
+                    Share on LinkedIn
+                  </Button>
+                  <Button 
+                    onClick={() => handleShare('twitter')} 
+                    variant="outline"
+                    className="flex justify-center"
+                  >
+                    Share on Twitter
+                  </Button>
+                  <Button 
+                    onClick={() => handleShare('facebook')} 
+                    variant="outline"
+                    className="flex justify-center"
+                  >
+                    Share on Facebook
+                  </Button>
+                </div>
+                
+                <Separator />
+                
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Direct Link</p>
+                  <div className="flex items-center gap-2">
+                    <Input 
+                      value={deployedUrl || `https://portfolio.example.com/${portfolioData?.user_id || 'user'}`}
+                      readOnly
+                    />
+                    <Button 
+                      size="sm" 
+                      onClick={handleCopyLink}
+                      className="flex items-center gap-1 whitespace-nowrap"
+                    >
+                      <Link size={14} />
+                      Copy
+                    </Button>
+                  </div>
+                </div>
               </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
       
       <div className="text-center text-gray-500 text-sm">
-        <p>Your portfolio will be available at https://portfolio.example.com/{portfolioData?.user_id || 'user'}</p>
+        {deployedUrl ? (
+          <p>Your portfolio is available at <span className="font-medium">{deployedUrl}</span></p>
+        ) : (
+          <p>Deploy your portfolio to get a shareable link</p>
+        )}
       </div>
     </div>
   );
