@@ -10,6 +10,61 @@ import PortfolioActions from './PortfolioActions';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
+// Define proper types for JSON fields
+interface ContactInfo {
+  name?: string;
+  email?: string;
+  phone?: string;
+  location?: string;
+}
+
+interface SocialLinks {
+  linkedin?: string;
+  github?: string;
+  portfolio?: string;
+}
+
+interface Experience {
+  id: string;
+  position: string;
+  company: string;
+  location?: string;
+  startDate: string;
+  endDate?: string;
+  current: boolean;
+  description?: string;
+}
+
+interface Education {
+  id: string;
+  school: string;
+  degree: string;
+  field: string;
+  location?: string;
+  startDate: string;
+  endDate?: string;
+  current?: boolean;
+  description?: string;
+}
+
+interface Project {
+  id: string;
+  title: string;
+  description?: string;
+  technologies?: string[];
+  startDate?: string;
+  endDate?: string;
+  current?: boolean;
+  link?: string;
+  imageUrl?: string;
+}
+
+interface SkillGroup {
+  id: string;
+  name: string;
+  skills: string[];
+}
+
 interface PortfolioPreviewProps {
   portfolioData: Partial<Profile> | null;
 }
@@ -32,8 +87,16 @@ const PortfolioPreview: React.FC<PortfolioPreviewProps> = ({ portfolioData }) =>
     social_links = {}
   } = portfolioData;
 
-  const sortedExperience = Array.isArray(experience) 
-    ? [...experience].sort((a, b) => {
+  // Cast JSON fields to their proper types
+  const typedExperience = experience as unknown as Experience[];
+  const typedEducation = education as unknown as Education[];
+  const typedProjects = projects as unknown as Project[];
+  const typedSkills = skills as unknown as SkillGroup[];
+  const typedContactInfo = contact_info as unknown as ContactInfo;
+  const typedSocialLinks = social_links as unknown as SocialLinks;
+
+  const sortedExperience = Array.isArray(typedExperience) 
+    ? [...typedExperience].sort((a, b) => {
         // Sort by current first, then by start date descending
         if (a.current && !b.current) return -1;
         if (!a.current && b.current) return 1;
@@ -41,8 +104,8 @@ const PortfolioPreview: React.FC<PortfolioPreviewProps> = ({ portfolioData }) =>
       })
     : [];
 
-  const sortedEducation = Array.isArray(education)
-    ? [...education].sort((a, b) => new Date(b.startDate || '') > new Date(a.startDate || '') ? 1 : -1)
+  const sortedEducation = Array.isArray(typedEducation)
+    ? [...typedEducation].sort((a, b) => new Date(b.startDate || '') > new Date(a.startDate || '') ? 1 : -1)
     : [];
 
   return (
@@ -65,31 +128,31 @@ const PortfolioPreview: React.FC<PortfolioPreviewProps> = ({ portfolioData }) =>
         <div className="space-y-8 bg-white p-8 rounded-lg shadow-md">
           {/* Header Section */}
           <div className="text-center mb-8 space-y-4">
-            <h1 className="text-3xl font-bold">{contact_info.name || 'Your Name'}</h1>
+            <h1 className="text-3xl font-bold">{typedContactInfo.name || 'Your Name'}</h1>
             <h2 className="text-xl text-gray-700">{headline || 'Your Headline'}</h2>
             <div className="flex justify-center items-center gap-4 text-sm text-gray-600">
-              {contact_info.email && <span>{contact_info.email}</span>}
-              {contact_info.phone && <span>{contact_info.phone}</span>}
-              {contact_info.location && (
+              {typedContactInfo.email && <span>{typedContactInfo.email}</span>}
+              {typedContactInfo.phone && <span>{typedContactInfo.phone}</span>}
+              {typedContactInfo.location && (
                 <span className="flex items-center gap-1">
                   <MapPin className="h-3 w-3" />
-                  {contact_info.location}
+                  {typedContactInfo.location}
                 </span>
               )}
             </div>
             <div className="flex justify-center gap-4">
-              {social_links.linkedin && (
-                <a href={social_links.linkedin} target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-gray-800">
+              {typedSocialLinks.linkedin && (
+                <a href={typedSocialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-gray-800">
                   LinkedIn
                 </a>
               )}
-              {social_links.github && (
-                <a href={social_links.github} target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-gray-800">
+              {typedSocialLinks.github && (
+                <a href={typedSocialLinks.github} target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-gray-800">
                   GitHub
                 </a>
               )}
-              {social_links.portfolio && (
-                <a href={social_links.portfolio} target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-gray-800">
+              {typedSocialLinks.portfolio && (
+                <a href={typedSocialLinks.portfolio} target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-gray-800">
                   Portfolio
                 </a>
               )}
@@ -109,7 +172,7 @@ const PortfolioPreview: React.FC<PortfolioPreviewProps> = ({ portfolioData }) =>
             <div className="space-y-4">
               <h3 className="text-xl font-semibold border-b pb-2">Experience</h3>
               <div className="space-y-6">
-                {sortedExperience.map((exp: any, index) => (
+                {sortedExperience.map((exp, index) => (
                   <div key={exp.id || index} className="space-y-2">
                     <div className="flex justify-between items-center">
                       <h4 className="font-semibold">{exp.position}</h4>
@@ -132,7 +195,7 @@ const PortfolioPreview: React.FC<PortfolioPreviewProps> = ({ portfolioData }) =>
             <div className="space-y-4">
               <h3 className="text-xl font-semibold border-b pb-2">Education</h3>
               <div className="space-y-6">
-                {sortedEducation.map((edu: any, index) => (
+                {sortedEducation.map((edu, index) => (
                   <div key={edu.id || index} className="space-y-2">
                     <h4 className="font-semibold">{edu.degree} in {edu.field}</h4>
                     <div className="text-gray-700">{edu.school}{edu.location ? `, ${edu.location}` : ''}</div>
@@ -148,11 +211,11 @@ const PortfolioPreview: React.FC<PortfolioPreviewProps> = ({ portfolioData }) =>
           )}
   
           {/* Projects Section */}
-          {Array.isArray(projects) && projects.length > 0 && (
+          {Array.isArray(typedProjects) && typedProjects.length > 0 && (
             <div className="space-y-4">
               <h3 className="text-xl font-semibold border-b pb-2">Projects</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {projects.map((project: any, index) => (
+                {typedProjects.map((project, index) => (
                   <Card key={project.id || index}>
                     <CardContent className="p-4 space-y-3">
                       <div className="flex justify-between items-start">
@@ -166,7 +229,7 @@ const PortfolioPreview: React.FC<PortfolioPreviewProps> = ({ portfolioData }) =>
                       {project.description && <p className="text-sm text-gray-600">{project.description}</p>}
                       {project.technologies && project.technologies.length > 0 && (
                         <div className="flex flex-wrap gap-1">
-                          {project.technologies.map((tech: string, techIndex: number) => (
+                          {project.technologies.map((tech, techIndex) => (
                             <Badge key={techIndex} variant="secondary" className="bg-gray-100">
                               {tech}
                             </Badge>
@@ -186,15 +249,15 @@ const PortfolioPreview: React.FC<PortfolioPreviewProps> = ({ portfolioData }) =>
           )}
   
           {/* Skills Section */}
-          {Array.isArray(skills) && skills.length > 0 && (
+          {Array.isArray(typedSkills) && typedSkills.length > 0 && (
             <div className="space-y-4">
               <h3 className="text-xl font-semibold border-b pb-2">Skills</h3>
               <div className="space-y-4">
-                {skills.map((skillGroup: any, index) => (
+                {typedSkills.map((skillGroup, index) => (
                   <div key={skillGroup.id || index} className="space-y-2">
                     <h4 className="font-medium text-gray-700">{skillGroup.name}</h4>
                     <div className="flex flex-wrap gap-2">
-                      {skillGroup.skills && skillGroup.skills.map((skill: string, skillIndex: number) => (
+                      {skillGroup.skills && skillGroup.skills.map((skill, skillIndex) => (
                         <Badge key={skillIndex} className="bg-gray-100 text-gray-800 border-gray-200">
                           {skill}
                         </Badge>
@@ -212,14 +275,14 @@ const PortfolioPreview: React.FC<PortfolioPreviewProps> = ({ portfolioData }) =>
         <div className="space-y-6 bg-white p-8 rounded-lg shadow-md max-w-4xl mx-auto">
           {/* Classic Layout - Similar to a traditional resume */}
           <div className="border-b-2 border-gray-700 pb-4 mb-6">
-            <h1 className="text-2xl font-bold text-center">{contact_info.name || 'Your Name'}</h1>
+            <h1 className="text-2xl font-bold text-center">{typedContactInfo.name || 'Your Name'}</h1>
             <p className="text-center text-gray-600">{headline || 'Your Professional Title'}</p>
             <div className="flex justify-center flex-wrap gap-3 mt-2 text-sm">
-              {contact_info.email && <span>{contact_info.email}</span>}
-              {contact_info.phone && <span> • {contact_info.phone}</span>}
-              {contact_info.location && <span> • {contact_info.location}</span>}
-              {social_links.linkedin && (
-                <span> • <a href={social_links.linkedin} className="text-blue-600 hover:underline">LinkedIn</a></span>
+              {typedContactInfo.email && <span>{typedContactInfo.email}</span>}
+              {typedContactInfo.phone && <span> • {typedContactInfo.phone}</span>}
+              {typedContactInfo.location && <span> • {typedContactInfo.location}</span>}
+              {typedSocialLinks.linkedin && (
+                <span> • <a href={typedSocialLinks.linkedin} className="text-blue-600 hover:underline">LinkedIn</a></span>
               )}
             </div>
           </div>
@@ -234,7 +297,7 @@ const PortfolioPreview: React.FC<PortfolioPreviewProps> = ({ portfolioData }) =>
           {sortedExperience.length > 0 && (
             <div className="mb-6">
               <h2 className="text-lg font-bold uppercase mb-2">Professional Experience</h2>
-              {sortedExperience.map((exp: any, index) => (
+              {sortedExperience.map((exp, index) => (
                 <div key={exp.id || index} className="mb-4">
                   <div className="flex justify-between">
                     <h3 className="font-bold">{exp.position}</h3>
@@ -252,7 +315,7 @@ const PortfolioPreview: React.FC<PortfolioPreviewProps> = ({ portfolioData }) =>
           {sortedEducation.length > 0 && (
             <div className="mb-6">
               <h2 className="text-lg font-bold uppercase mb-2">Education</h2>
-              {sortedEducation.map((edu: any, index) => (
+              {sortedEducation.map((edu, index) => (
                 <div key={edu.id || index} className="mb-3">
                   <div className="flex justify-between">
                     <h3 className="font-bold">{edu.degree} in {edu.field}</h3>
@@ -266,11 +329,11 @@ const PortfolioPreview: React.FC<PortfolioPreviewProps> = ({ portfolioData }) =>
             </div>
           )}
   
-          {Array.isArray(skills) && skills.length > 0 && (
+          {Array.isArray(typedSkills) && typedSkills.length > 0 && (
             <div className="mb-6">
               <h2 className="text-lg font-bold uppercase mb-2">Skills</h2>
               <div className="space-y-2">
-                {skills.map((skillGroup: any, index) => (
+                {typedSkills.map((skillGroup, index) => (
                   <div key={skillGroup.id || index}>
                     <h3 className="font-semibold">{skillGroup.name}</h3>
                     <p>{skillGroup.skills ? skillGroup.skills.join(', ') : ''}</p>
@@ -280,10 +343,10 @@ const PortfolioPreview: React.FC<PortfolioPreviewProps> = ({ portfolioData }) =>
             </div>
           )}
   
-          {Array.isArray(projects) && projects.length > 0 && (
+          {Array.isArray(typedProjects) && typedProjects.length > 0 && (
             <div>
               <h2 className="text-lg font-bold uppercase mb-2">Projects</h2>
-              {projects.map((project: any, index) => (
+              {typedProjects.map((project, index) => (
                 <div key={project.id || index} className="mb-3">
                   <div className="flex justify-between">
                     <h3 className="font-bold">{project.title}</h3>
