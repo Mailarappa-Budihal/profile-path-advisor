@@ -58,7 +58,21 @@ const PortfolioBuilder = () => {
       setPortfolioData(data);
     } catch (error: any) {
       console.error('Error fetching profile data:', error);
-      toast.error('Failed to load your profile data');
+      // If the user doesn't have a profile yet, we'll create an empty one
+      if (error.code === 'PGRST116') {
+        setPortfolioData({
+          headline: '',
+          summary: '',
+          experience: [],
+          education: [],
+          projects: [],
+          skills: [],
+          social_links: {},
+          contact_info: { email: user.email }
+        });
+      } else {
+        toast.error('Failed to load your profile data');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -111,8 +125,6 @@ const PortfolioBuilder = () => {
     
     try {
       // Simulate parsing resume and generating portfolio data
-      // In a real implementation, you would send the file to a backend service
-      // that would parse the resume and return structured data
       setTimeout(() => {
         const mockPortfolioData = {
           headline: "Frontend Developer",

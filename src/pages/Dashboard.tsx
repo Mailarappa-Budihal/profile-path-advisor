@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthProvider';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 
@@ -71,14 +71,14 @@ const DashboardCard = ({ title, description, href, icon }: {
   icon: string;
 }) => {
   return (
-    <a 
-      href={href} 
+    <Link 
+      to={href} 
       className="block p-6 bg-white rounded-lg border border-gray-200 shadow-md hover:bg-gray-50 transition-all"
     >
       <div className="text-4xl mb-4">{icon}</div>
       <h5 className="mb-2 text-xl font-bold tracking-tight">{title}</h5>
       <p className="text-gray-600">{description}</p>
-    </a>
+    </Link>
   );
 };
 
